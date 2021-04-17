@@ -2,12 +2,14 @@ package ipvc.estg.sensorandmultimediaapp
 
 import android.app.Activity
 import android.content.Intent
+import android.opengl.Visibility
 import android.os.Build
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
@@ -18,6 +20,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
 
     private var tts: TextToSpeech? = null
     private val RQ_SPEECH_REC = 102
+
+    //TODO: Sensor de luz
+    //TODO: Abanar o telemovel
+    //TODO: Virar o telemovel ao contrario
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +37,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener {
         ivStickman.setOnClickListener {view ->
             speakOut("Welcome!")
             speakOut("What's your name?")
+            btnSpeech.isClickable = true
+            btnSpeech.visibility = View.VISIBLE
         }
 
         btnSpeech.setOnClickListener {

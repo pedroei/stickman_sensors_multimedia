@@ -22,6 +22,8 @@
         android:layout_below="@+id/ivStickman"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"
+        android:visibility="invisible"
+        android:clickable="false"
         android:text="Speech"/>
 
 </RelativeLayout>
