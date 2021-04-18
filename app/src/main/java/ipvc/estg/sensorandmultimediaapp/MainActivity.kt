@@ -48,7 +48,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     var isPhoneReverse = false
 
     //TODO: Abrir camara frontal
-    //TODO: Mudar cores (a cor atual é roxo)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
