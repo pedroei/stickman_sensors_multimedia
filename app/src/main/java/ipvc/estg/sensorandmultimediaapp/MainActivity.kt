@@ -47,7 +47,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     var shakesNum: Int = 0
     var isPhoneReverse = false
 
-    //TODO: Virar o telemovel ao contrario
+    //TODO: Abrir camara frontal
+    //TODO: Mudar cores (a cor atual é roxo)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -214,12 +215,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         }
 
         if (orientations[2] > 130) {
-            ivStickman.visibility = View.INVISIBLE
+            ivStickman.isClickable = false
+            ivStickman.alpha = 0F
             ivStickmanReverse.visibility = View.VISIBLE
             isPhoneReverse = true
         } else if (orientations[2] <= 30) {
             ivStickmanReverse.visibility = View.INVISIBLE
-            ivStickman.visibility = View.VISIBLE
+            ivStickman.isClickable = true
+            ivStickman.alpha = 1F
         }
     }
 
