@@ -28,21 +28,25 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     private var tts: TextToSpeech? = null
     private val RQ_SPEECH_REC = 102
 
+    var userName: String = ""
+
     var lightSensor: Sensor? = null
     var accSensor: Sensor? = null
+    var rotationSensor: Sensor? = null
     var sensorManager: SensorManager? = null
 
     lateinit var ivStickman: ImageView
     lateinit var btnSpeech: Button
     lateinit var rlMain: RelativeLayout
     lateinit var ivStickmanSick: ImageView
+    lateinit var ivStickmanReverse: ImageView
 
     var isLightSensorOn = false
     var updateTime: Long? = null
     var isSickOn = false
     var shakesNum: Int = 0
+    var isPhoneReverse = false
 
-    //TODO: Abanar o telemovel
     //TODO: Virar o telemovel ao contrario
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,11 +58,13 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         lightSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LIGHT)
         accSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        rotationSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
 
         ivStickman = findViewById(R.id.ivStickman)
         btnSpeech = findViewById(R.id.btnSpeech)
         rlMain = findViewById(R.id.rlMain)
         ivStickmanSick = findViewById(R.id.ivStickmanSick)
+        ivStickmanReverse = findViewById(R.id.ivStickmanReverse)
 
         ivStickman.setOnClickListener {view ->
             if (isLightSensorOn){
@@ -79,6 +85,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
             shakesNum = 0
         }
 
+        ivStickmanReverse.setOnClickListener {
+            speakOut("Please put the phone right $userName, I'm getting tired", TextToSpeech.QUEUE_FLUSH)
+        }
+
         btnSpeech.setOnClickListener {
             askSpeechInput()
         }
@@ -94,6 +104,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         if (requestCode == RQ_SPEECH_REC && resultCode == Activity.RESULT_OK) {
             val result = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
             speakOut("Hello $result", TextToSpeech.QUEUE_ADD)
+            userName = result.toString()
+            btnSpeech.isClickable = false
+            btnSpeech.visibility = View.INVISIBLE
         }
     }
 
@@ -143,7 +156,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     override fun onResume() {
         super.onResume()
         sensorManager!!.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
-        sensorManager!!.registerListener(this, accSensor,SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager!!.registerListener(this, accSensor, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager!!.registerListener(this, rotationSensor, SensorManager.SENSOR_DELAY_NORMAL)
     }
 
     override fun onPause() {
@@ -159,12 +173,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         if (event!!.sensor.type == Sensor.TYPE_ACCELEROMETER) {
             accelerometerCalculations(event)
         }
+
         if (event!!.sensor.type == Sensor.TYPE_LIGHT) {
             try {
                 if (event!!.values[0] < 12) { //15 is good
                     ivStickman.setImageResource(R.drawable.stickman_sleep)
                     rlMain.setBackgroundResource(R.drawable.night)
-//                speakOut("It's a beautiful night...", TextToSpeech.QUEUE_FLUSH)
                     isLightSensorOn = true
                 } else {
                     ivStickman.setImageResource(R.drawable.stickman_hello)
@@ -173,6 +187,39 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
                 }
             } catch (e: IOException) {
             }
+        }
+
+        if (event!!.sensor.type == Sensor.TYPE_ROTATION_VECTOR) {
+            handleRotationVector(event)
+        }
+    }
+
+    private fun handleRotationVector(event: SensorEvent) {
+        val rotationMatrix = FloatArray(16)
+        SensorManager.getRotationMatrixFromVector(rotationMatrix, event?.values)
+
+        val remappedRotationMatrix = FloatArray(16)
+        SensorManager.remapCoordinateSystem(
+                rotationMatrix,
+                SensorManager.AXIS_X,
+                SensorManager.AXIS_Z,
+                remappedRotationMatrix
+        )
+
+        var orientations: FloatArray = FloatArray(3)
+        SensorManager.getOrientation(remappedRotationMatrix, orientations)
+
+        for (i in 0..2) {
+            orientations[i] = (Math.toDegrees(orientations[i].toDouble()).toFloat())
+        }
+
+        if (orientations[2] > 130) {
+            ivStickman.visibility = View.INVISIBLE
+            ivStickmanReverse.visibility = View.VISIBLE
+            isPhoneReverse = true
+        } else if (orientations[2] <= 30) {
+            ivStickmanReverse.visibility = View.INVISIBLE
+            ivStickman.visibility = View.VISIBLE
         }
     }
 
@@ -191,7 +238,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
             if (timeNow - updateTime!! < 1000) { return }
 
             updateTime = timeNow
-//            Toast.makeText(this, "Movement detected!", Toast.LENGTH_SHORT).show()
 
             if (!isSickOn) {
                 ivStickman.visibility = View.INVISIBLE
@@ -206,11 +252,6 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
             }
             if (shakesNum >= 4) speakOut("Help me please, I'm very sick", TextToSpeech.QUEUE_ADD)
 
-//            else {
-////                ivStickman.setImageResource(R.drawable.stickman_hello)
-//                speakOut("Thank you good sir", TextToSpeech.QUEUE_ADD)
-//                isSickOn = false
-//            }
         }
     }
 }

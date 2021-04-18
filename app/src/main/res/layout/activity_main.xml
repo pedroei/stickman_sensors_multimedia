@@ -26,6 +26,15 @@
         android:visibility="invisible"
         android:src="@drawable/sick"/>
 
+    <ImageView
+        android:id="@+id/ivStickmanReverse"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="300dp"
+        android:visibility="invisible"
+        android:src="@drawable/stickman_reverse"/>
+
     <Button
         android:id="@+id/btnSpeech"
         android:layout_width="wrap_content"
