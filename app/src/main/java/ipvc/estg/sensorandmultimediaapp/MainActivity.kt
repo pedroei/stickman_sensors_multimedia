@@ -29,14 +29,16 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     private val RQ_SPEECH_REC = 102
 
     var lightSensor: Sensor? = null
+    var accSensor: Sensor? = null
     var sensorManager: SensorManager? = null
 
     lateinit var ivStickman: ImageView
     lateinit var btnSpeech: Button
-    lateinit var ivStickmanSleep: ImageView
     lateinit var rlMain: RelativeLayout
 
-    //TODO: Sensor de luz
+    var isLightSensorOn = false
+    var updateTime: Long? = null
+
     //TODO: Abanar o telemovel
     //TODO: Virar o telemovel ao contrario
 
@@ -48,22 +50,28 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         lightSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_LIGHT)
+        accSensor = sensorManager!!.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
         ivStickman = findViewById(R.id.ivStickman)
         btnSpeech = findViewById(R.id.btnSpeech)
         rlMain = findViewById(R.id.rlMain)
 
         ivStickman.setOnClickListener {view ->
-            speakOut("Welcome!", TextToSpeech.QUEUE_ADD)
-            speakOut("What's your name?", TextToSpeech.QUEUE_ADD)
-            btnSpeech.isClickable = true
-            btnSpeech.visibility = View.VISIBLE
+            if (isLightSensorOn){
+                speakOut("It's a beautiful night...", TextToSpeech.QUEUE_ADD)
+            } else {
+                speakOut("Welcome!", TextToSpeech.QUEUE_ADD)
+                speakOut("What's your name?", TextToSpeech.QUEUE_ADD)
+                btnSpeech.isClickable = true
+                btnSpeech.visibility = View.VISIBLE
+            } //if sick, put it back
         }
 
         btnSpeech.setOnClickListener {
             askSpeechInput()
         }
 
+        updateTime = System.currentTimeMillis()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -121,6 +129,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     override fun onResume() {
         super.onResume()
         sensorManager!!.registerListener(this, lightSensor, SensorManager.SENSOR_DELAY_NORMAL)
+        sensorManager!!.registerListener(this, accSensor,SensorManager.SENSOR_DELAY_NORMAL)
     }
 
     override fun onPause() {
@@ -129,20 +138,53 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
-        //Not implemented for light sensor
+        //Not implemented
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        try {
-            if (event!!.values[0] < 10) {
-                ivStickman.setImageResource(R.drawable.stickman_sleep)
-                rlMain.setBackgroundColor(Color.parseColor("#cccccc"))
-                speakOut("It's a beautiful night...", TextToSpeech.QUEUE_FLUSH)
-            } else {
-                ivStickman.setImageResource(R.drawable.stickman_hello)
-                rlMain.setBackgroundColor(Color.parseColor("#ffffff"))
-
+        if (event!!.sensor.type == Sensor.TYPE_ACCELEROMETER) {
+            accelerometerCalculations(event)
+        }
+        if (event!!.sensor.type == Sensor.TYPE_LIGHT) {
+            try {
+                if (event!!.values[0] < 15) {
+                    ivStickman.setImageResource(R.drawable.stickman_sleep)
+                    rlMain.setBackgroundResource(R.drawable.night)
+//                speakOut("It's a beautiful night...", TextToSpeech.QUEUE_FLUSH)
+                    isLightSensorOn = true
+                } else {
+                    ivStickman.setImageResource(R.drawable.stickman_hello)
+                    rlMain.setBackgroundColor(Color.parseColor("#ffffff"))
+                    isLightSensorOn = false
+                }
+            } catch (e: IOException) {
             }
-        } catch(e: IOException){}
+        }
+    }
+
+    private fun accelerometerCalculations(event: SensorEvent) {
+        val values: FloatArray? = event.values
+        val x: Float = values!![0]
+        val y: Float = values[1]
+        val z: Float = values[2]
+
+        val timeNow: Long = System.currentTimeMillis()
+
+        val acceleration =
+            (x * x + y * y + z * z) / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH)
+
+        if (acceleration >= 2) {
+            if (timeNow - updateTime!! < 200) { return }
+
+            updateTime = timeNow
+            Toast.makeText(this, "Movement detected!", Toast.LENGTH_SHORT).show()
+
+//            if (color) { view?.setBackgroundColor(Color.BLUE) }
+//            else { view?.setBackgroundColor(Color.GREEN) }
+//            color = !color
+            //TODO: Sick stickman
+            //change image to sick
+            //say "Please stop!!"
+        }
     }
 }
