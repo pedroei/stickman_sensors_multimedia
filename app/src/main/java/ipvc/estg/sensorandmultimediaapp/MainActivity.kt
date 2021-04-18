@@ -35,9 +35,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     lateinit var ivStickman: ImageView
     lateinit var btnSpeech: Button
     lateinit var rlMain: RelativeLayout
+    lateinit var ivStickmanSick: ImageView
 
     var isLightSensorOn = false
     var updateTime: Long? = null
+    var isSickOn = false
+    var shakesNum: Int = 0
 
     //TODO: Abanar o telemovel
     //TODO: Virar o telemovel ao contrario
@@ -55,16 +58,25 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         ivStickman = findViewById(R.id.ivStickman)
         btnSpeech = findViewById(R.id.btnSpeech)
         rlMain = findViewById(R.id.rlMain)
+        ivStickmanSick = findViewById(R.id.ivStickmanSick)
 
         ivStickman.setOnClickListener {view ->
             if (isLightSensorOn){
                 speakOut("It's a beautiful night...", TextToSpeech.QUEUE_ADD)
-            } else {
+            }else {
                 speakOut("Welcome!", TextToSpeech.QUEUE_ADD)
                 speakOut("What's your name?", TextToSpeech.QUEUE_ADD)
                 btnSpeech.isClickable = true
                 btnSpeech.visibility = View.VISIBLE
             } //if sick, put it back
+        }
+
+        ivStickmanSick.setOnClickListener {
+            ivStickmanSick.visibility = View.INVISIBLE
+            ivStickman.visibility = View.VISIBLE
+            speakOut("Thank you good sir", TextToSpeech.QUEUE_FLUSH)
+            isSickOn = false
+            shakesNum = 0
         }
 
         btnSpeech.setOnClickListener {
@@ -73,6 +85,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
 
         updateTime = System.currentTimeMillis()
     }
+
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -147,7 +161,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         }
         if (event!!.sensor.type == Sensor.TYPE_LIGHT) {
             try {
-                if (event!!.values[0] < 15) {
+                if (event!!.values[0] < 12) { //15 is good
                     ivStickman.setImageResource(R.drawable.stickman_sleep)
                     rlMain.setBackgroundResource(R.drawable.night)
 //                speakOut("It's a beautiful night...", TextToSpeech.QUEUE_FLUSH)
@@ -173,18 +187,30 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         val acceleration =
             (x * x + y * y + z * z) / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH)
 
-        if (acceleration >= 2) {
-            if (timeNow - updateTime!! < 200) { return }
+        if (acceleration >= 10) {
+            if (timeNow - updateTime!! < 1000) { return }
 
             updateTime = timeNow
-            Toast.makeText(this, "Movement detected!", Toast.LENGTH_SHORT).show()
+//            Toast.makeText(this, "Movement detected!", Toast.LENGTH_SHORT).show()
 
-//            if (color) { view?.setBackgroundColor(Color.BLUE) }
-//            else { view?.setBackgroundColor(Color.GREEN) }
-//            color = !color
-            //TODO: Sick stickman
-            //change image to sick
-            //say "Please stop!!"
+            if (!isSickOn) {
+                ivStickman.visibility = View.INVISIBLE
+                ivStickmanSick.visibility = View.VISIBLE
+                isSickOn = true
+                shakesNum++
+            }
+
+            if (shakesNum in 1..3) {
+                speakOut("Please stop I can't handle this", TextToSpeech.QUEUE_ADD)
+                shakesNum++
+            }
+            if (shakesNum >= 4) speakOut("Help me please, I'm very sick", TextToSpeech.QUEUE_ADD)
+
+//            else {
+////                ivStickman.setImageResource(R.drawable.stickman_hello)
+//                speakOut("Thank you good sir", TextToSpeech.QUEUE_ADD)
+//                isSickOn = false
+//            }
         }
     }
 }

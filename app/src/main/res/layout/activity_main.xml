@@ -17,6 +17,15 @@
         android:layout_height="300dp"
         android:src="@drawable/stickman_hello"/>
 
+    <ImageView
+        android:id="@+id/ivStickmanSick"
+        android:layout_marginTop="100dp"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="300dp"
+        android:visibility="invisible"
+        android:src="@drawable/sick"/>
+
     <Button
         android:id="@+id/btnSpeech"
         android:layout_width="wrap_content"
