@@ -24,6 +24,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.io.IOException
 import java.util.*
+import kotlin.concurrent.schedule
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEventListener {
 
@@ -104,7 +105,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
 
             if (cameraIntent.resolveActivity(this.packageManager) != null) {
                 startActivityForResult(cameraIntent, REQUEST_CODE_CAM)
-                speakOut("You are not very pretty $userName", TextToSpeech.QUEUE_FLUSH)
+                Timer("SettingUp", false).schedule(1000) {
+                    speakOut("You are not very pretty $userName", TextToSpeech.QUEUE_FLUSH)
+                }
             } else {
                 Toast.makeText(this, "Unable to open camera", Toast.LENGTH_SHORT).show()
             }
