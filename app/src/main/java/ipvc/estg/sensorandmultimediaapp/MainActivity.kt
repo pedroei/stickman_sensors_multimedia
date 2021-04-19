@@ -3,6 +3,7 @@ package ipvc.estg.sensorandmultimediaapp
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -10,6 +11,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.MediaStore
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
@@ -27,6 +29,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
 
     private var tts: TextToSpeech? = null
     private val RQ_SPEECH_REC = 102
+    private val REQUEST_CODE_CAM = 42
 
     var userName: String = ""
 
@@ -40,6 +43,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
     lateinit var rlMain: RelativeLayout
     lateinit var ivStickmanSick: ImageView
     lateinit var ivStickmanReverse: ImageView
+    lateinit var btnCamera: Button
 
     var isLightSensorOn = false
     var updateTime: Long? = null
@@ -65,6 +69,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
         rlMain = findViewById(R.id.rlMain)
         ivStickmanSick = findViewById(R.id.ivStickmanSick)
         ivStickmanReverse = findViewById(R.id.ivStickmanReverse)
+        btnCamera = findViewById(R.id.btnCamera)
 
         ivStickman.setOnClickListener {view ->
             if (isLightSensorOn){
@@ -93,10 +98,20 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
             askSpeechInput()
         }
 
+        btnCamera.setOnClickListener {
+            val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            cameraIntent.putExtra("android.intent.extras.CAMERA_FACING", 1) //Try 1
+
+            if (cameraIntent.resolveActivity(this.packageManager) != null) {
+                startActivityForResult(cameraIntent, REQUEST_CODE_CAM)
+                speakOut("You are not very pretty $userName", TextToSpeech.QUEUE_FLUSH)
+            } else {
+                Toast.makeText(this, "Unable to open camera", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         updateTime = System.currentTimeMillis()
     }
-
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -107,6 +122,12 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, SensorEve
             userName = result.toString()
             btnSpeech.isClickable = false
             btnSpeech.visibility = View.INVISIBLE
+        }
+
+        if (requestCode == REQUEST_CODE_CAM && resultCode == Activity.RESULT_OK) {
+            val img = data?.extras?.get("data") as Bitmap
+            speakOut("I hope you won't send this to anyone... huph", TextToSpeech.QUEUE_FLUSH)
+            //I can set the image to an image view example: imageView.setImageBitmap(img)
         }
     }
 
